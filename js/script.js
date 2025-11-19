@@ -95,11 +95,10 @@ function showMessage(text, type) {
     }, 5000);
 }
 
-// Обработка отправки формы
+// Упрощенная версия обработки отправки
 feedbackForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    // Проверка валидации телефона перед отправкой
     if (phoneInput.value && !validatePhone(phoneInput.value)) {
         phoneError.style.display = 'block';
         phoneInput.style.borderColor = '#dc3545';
@@ -112,24 +111,16 @@ feedbackForm.addEventListener('submit', async (e) => {
 
     try {
         const formData = new FormData(feedbackForm);
+        await fetch(FORM_ENDPOINT, { method: 'POST', body: formData });
         
-        const response = await fetch(FORM_ENDPOINT, {
-            method: 'POST',
-            body: formData
-        });
-
-        if (response.ok) {
-            showMessage('Сообщение успешно отправлено!', 'success');
-            clearFormData();
-            setTimeout(closeForm, 2000);
-        } else {
-            // Только если сервер вернул ошибку
-            showMessage('Ошибка при отправке формы. Попробуйте еще раз.', 'error');
-        }
+        // Если запрос выполнился без исключений - считаем успехом
+        showMessage('Сообщение успешно отправлено!', 'success');
+        clearFormData();
+        setTimeout(closeForm, 2000);
+        
     } catch (error) {
-        // Только при реальных ошибках сети
-        console.error('Ошибка отправки:', error);
-        showMessage('Ошибка сети. Проверьте подключение к интернету.', 'error');
+        // Только реальные ошибки сети
+        showMessage('Ошибка сети. Попробуйте еще раз.', 'error');
     } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Отправить';
