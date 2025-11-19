@@ -53,9 +53,10 @@ function loadFormData() {
         Object.keys(formData).forEach(key => {
             const element = feedbackForm.elements[key];
             if (element) {
-                element.value = formData[key];
                 if (element.type === 'checkbox') {
                     element.checked = formData[key];
+                } else {
+                    element.value = formData[key] || '';
                 }
             }
         });
@@ -109,26 +110,26 @@ feedbackForm.addEventListener('submit', async (e) => {
     submitBtn.disabled = true;
     submitBtn.textContent = 'Отправка...';
 
-    const formData = new FormData(feedbackForm);
-    
     try {
+        const formData = new FormData(feedbackForm);
+        
         const response = await fetch(FORM_ENDPOINT, {
             method: 'POST',
-            body: formData // Отправляем как FormData, а не JSON
+            body: formData
         });
 
-        const result = await response.json();
-
-        if (response.ok && result.code === 200) {
+        if (response.ok) {
             showMessage('Сообщение успешно отправлено!', 'success');
             clearFormData();
             setTimeout(closeForm, 2000);
         } else {
-            throw new Error(result.message || 'Ошибка отправки формы');
+            // Только если сервер вернул ошибку
+            showMessage('Ошибка при отправке формы. Попробуйте еще раз.', 'error');
         }
     } catch (error) {
-        console.error('Form submission error:', error);
-        showMessage('Ошибка при отправке формы. Попробуйте еще раз.', 'error');
+        // Только при реальных ошибках сети
+        console.error('Ошибка отправки:', error);
+        showMessage('Ошибка сети. Проверьте подключение к интернету.', 'error');
     } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Отправить';
