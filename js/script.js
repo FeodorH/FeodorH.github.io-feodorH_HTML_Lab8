@@ -1,10 +1,6 @@
 const STORAGE_KEY = 'feedback_form_data';
-// Тестовые endpoints для демонстрации
-const FORM_ENDPOINTS = [
-    'https://httpbin.org/post', // Для тестирования - всегда возвращает успех
-    'https://formcarry.com/s/your-form-id', // Ваш реальный endpoint
-    'https://slapform.com/your-email@example.com' // Пример для slapform
-];
+// Замените YOUR_FORM_ID на ваш реальный ID от Formcarry
+const FORM_ENDPOINT = 'https://formcarry.com/s/RJBMZE4Ohuf';
 
 const popupOverlay = document.getElementById('popupOverlay');
 const feedbackForm = document.getElementById('feedbackForm');
@@ -15,14 +11,8 @@ const phoneError = document.getElementById('phoneError');
 
 // Валидация телефона - только цифры и разрешенные символы
 function validatePhone(phone) {
-    // Разрешаем только цифры, пробелы, +, -, (, )
     const phoneRegex = /^[0-9+\-\s\(\)]*$/;
     return phoneRegex.test(phone);
-}
-
-// Очистка телефона от лишних символов (опционально)
-function cleanPhone(phone) {
-    return phone.replace(/[^\d+]/g, '');
 }
 
 // Обработчик ввода для телефона
@@ -81,9 +71,7 @@ function saveFormData() {
         data[key] = value;
     }
     
-    // Для checkbox
     data.privacyPolicy = feedbackForm.elements.privacyPolicy.checked;
-    
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
@@ -122,37 +110,25 @@ feedbackForm.addEventListener('submit', async (e) => {
     submitBtn.textContent = 'Отправка...';
 
     const formData = new FormData(feedbackForm);
-    const data = Object.fromEntries(formData.entries());
-
+    
     try {
-        // Используем первый endpoint для тестирования
-        const response = await fetch(FORM_ENDPOINTS[0], {
+        const response = await fetch(FORM_ENDPOINT, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
+            body: formData // Отправляем как FormData, а не JSON
         });
 
-        if (response.ok) {
-            const result = await response.json();
+        const result = await response.json();
+
+        if (response.ok && result.code === 200) {
             showMessage('Сообщение успешно отправлено!', 'success');
             clearFormData();
             setTimeout(closeForm, 2000);
         } else {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(result.message || 'Ошибка отправки формы');
         }
     } catch (error) {
         console.error('Form submission error:', error);
-        
-        // Для демонстрации - показываем успех даже при ошибке
-        // В реальном приложении удалите этот блок
-        showMessage('Сообщение успешно отправлено! (демо-режим)', 'success');
-        clearFormData();
-        setTimeout(closeForm, 2000);
-        
-        // В реальном приложении используйте это:
-        // showMessage('Ошибка при отправке формы. Попробуйте еще раз.', 'error');
+        showMessage('Ошибка при отправке формы. Попробуйте еще раз.', 'error');
     } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Отправить';
